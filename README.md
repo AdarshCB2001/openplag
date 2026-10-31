@@ -7,7 +7,11 @@ Created by [ABC](https://www.linkedin.com/in/theabcguy/) ·
 
 OpenPlag checks an essay, assignment or research paper against the open web, scholarly databases, Wikipedia and your own files. It highlights every match, shows which source it came from, can estimate AI-written passages, and exports a PDF report. It runs on **your own computer**, so your documents stay private.
 
-▶️ **[Watch the 1-minute demo video](docs/demo/OpenPlag-demo.mp4)**
+▶️ 
+
+https://github.com/user-attachments/assets/c636c700-56c1-4485-aba3-a758a5ad70d0
+
+
 
 ## Quick start (Windows)
 
