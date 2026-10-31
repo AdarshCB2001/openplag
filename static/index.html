@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenPlag – Plagiarism Checker</title>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --ink:#111827; --ink2:#4b5563; --ink3:#9ca3af; --line:#e5e7eb;
+  --acc:#4338ca; --acc2:#eef2ff; --ok:#2e7d32; --warn:#c26100; --bad:#c62828; --r:14px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.bar{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:750;font-size:18px;letter-spacing:-.01em}
+.logo i{width:30px;height:30px;border-radius:9px;background:var(--acc);display:grid;place-items:center;color:#fff;font-style:normal;font-size:15px}
+.logo small{font-weight:500;color:var(--ink3);font-size:13px}
+.bar .sp{flex:1}
+@media(max-width:640px){.logo small{display:none}.foot{padding-bottom:20px}.bar{padding:10px 12px;gap:8px}.bar .btn{padding:8px 11px;font-size:13px}main{padding:14px 12px 60px}.tools .btn{padding:8px 11px;font-size:13px}}
+main{max-width:1240px;margin:0 auto;padding:22px 20px 60px}
+.grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card h3{margin:0 0 4px;font-size:15px}
+.card p.h{margin:0 0 12px;color:var(--ink2);font-size:13px}
+textarea{width:100%;min-height:330px;border:1px solid var(--line);border-radius:10px;padding:14px;font:inherit;resize:vertical;background:#fcfcfd}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--acc2);border-color:var(--acc)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--ink3);font-size:13px}
+.drop{border:1.5px dashed #c7cbd4;border-radius:10px;padding:14px;text-align:center;color:var(--ink2);font-size:13px;cursor:pointer;background:#fcfcfd}
+.drop.on{border-color:var(--acc);background:var(--acc2)}
+.drop b{color:var(--acc)}
+.files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.file{background:#f3f4f6;border-radius:999px;padding:3px 10px;font-size:12.5px;display:flex;gap:6px;align-items:center}
+.file button{border:0;background:none;cursor:pointer;color:var(--ink3);padding:0;font-size:14px}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:520px){.modes{grid-template-columns:repeat(2,1fr)}}
+.mode{border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;background:#fff;text-align:left;font:inherit}
+.mode b{display:block;font-size:14px}.mode span{font-size:12px;color:var(--ink2)}
+.mode.on{border-color:var(--acc);background:var(--acc2);box-shadow:0 0 0 1px var(--acc) inset}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;user-select:none;display:inline-flex;gap:6px;align-items:center}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.chip.dis{opacity:.45;cursor:not-allowed}
+.chip small{opacity:.75;font-size:11px}
+.grp{margin:10px 0 4px;font-size:12px;font-weight:650;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
+details{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+label.opt{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin:8px 0}
+input[type=text],input[type=password],input[type=number],select{border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit;font-size:13.5px;width:100%;background:#fff}
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:520px){.keys{grid-template-columns:1fr}}
+.keys label{font-size:12px;color:var(--ink2)}
+.btn{border:0;border-radius:10px;padding:11px 18px;font:inherit;font-weight:650;cursor:pointer;background:var(--acc);color:#fff;display:inline-flex;gap:8px;align-items:center}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.big{width:100%;justify-content:center;padding:14px;font-size:16px;margin-top:14px}
+.stack>*+*{margin-top:18px}
+/* progress */
+#progress{max-width:760px;margin:30px auto}
+.pbar{height:10px;background:#e8eaf0;border-radius:99px;overflow:hidden;margin:14px 0}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,#6366f1,var(--acc));width:0;transition:width .4s}
+.log{background:#0f172a;color:#cbd5e1;border-radius:10px;padding:12px;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;height:260px;overflow:auto;white-space:pre-wrap}
+/* results */
+#results{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+@media(max-width:980px){#results{grid-template-columns:1fr}}
+.side{position:sticky;top:76px;max-height:calc(100vh - 92px);overflow:auto}
+@media(max-width:980px){.side{position:static;max-height:none}}
+.score{display:flex;gap:16px;align-items:center}
+.ring{--p:0;--c:var(--ok);width:112px;height:112px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),#eceef3 0);display:grid;place-items:center;flex:none}
+.ring div{width:88px;height:88px;border-radius:50%;background:#fff;display:grid;place-items:center;text-align:center}
+.ring b{font-size:26px;line-height:1}.ring span{font-size:11px;color:var(--ink2)}
+.kv{font-size:13px;width:100%;border-collapse:collapse}
+.kv td{padding:3px 0;border-bottom:1px solid #f1f2f4}.kv td:last-child{text-align:right;font-weight:650}
+.src{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:9px 6px;border-bottom:1px solid #f1f2f4;border-radius:8px;cursor:pointer}
+.src:hover{background:#f8f9fb}
+.src.off{opacity:.45}
+.num{width:26px;height:26px;border-radius:7px;color:#fff;font-weight:700;font-size:12.5px;display:grid;place-items:center}
+.src .t{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.src .u{font-size:11.5px;color:var(--ink3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:220px}
+.src .pct{font-weight:750;font-size:14px;text-align:right}
+.src .x{font-size:11px;color:var(--ink2);display:block;text-align:right;cursor:pointer;text-decoration:underline}
+.badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:5px;background:#f3f4f6;color:var(--ink2);margin-right:4px;font-weight:600}
+.doc{font-size:15.5px;line-height:1.85;white-space:pre-wrap;word-wrap:break-word;font-family:Georgia,"Times New Roman",serif}
+.doc mark{border-radius:3px;padding:1px 0;cursor:pointer;color:inherit}
+.doc mark.near{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.doc mark.para{background:none!important;border-bottom:2px dotted}
+.doc mark.dim{background:transparent!important;border:0;text-decoration:none}
+.doc mark.focus{outline:2px solid #111;outline-offset:1px}
+.doc sup{font:700 10px/1 system-ui,sans-serif;margin:0 2px 0 1px;cursor:pointer}
+.doc .q{color:var(--ink3);font-style:italic}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink2)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.sw{width:22px;height:12px;border-radius:3px;background:#ffd6d6;display:inline-block}
+/* drawer */
+#drawer{position:fixed;inset:auto 0 0 0;max-height:62vh;overflow:auto;background:#fff;border-top:1px solid var(--line);box-shadow:0 -10px 30px rgba(0,0,0,.08);transform:translateY(105%);transition:transform .25s,visibility .25s;z-index:30;visibility:hidden}
+#drawer.open{transform:none;visibility:visible}
+#drawer .in{max-width:1100px;margin:0 auto;padding:16px 20px 22px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+@media(max-width:700px){.cmp{grid-template-columns:1fr}}
+.cmp div{background:#f8f9fb;border-radius:10px;padding:12px;font-size:14px;line-height:1.6}
+.cmp h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.cmp b.hl{background:#fff3b8;font-weight:600}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:50;display:none;max-width:90vw}
+.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;padding:10px 12px;border-radius:10px;font-size:14px;margin-top:10px;display:none}
+.hide{display:none!important}
+a{color:var(--acc)}
+.tabs{display:flex;gap:4px;background:#f1f2f5;border-radius:10px;padding:3px;margin-bottom:12px;width:max-content;max-width:100%}
+.tab{border:0;background:none;padding:7px 14px;border-radius:8px;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink2);cursor:pointer}
+.tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.aip{border-radius:4px;cursor:pointer;padding:1px 0}
+.aip:hover{outline:1px solid #7c3aed}
+.aip.focus{outline:2px solid #111}
+.aitag{font:700 10px/1 system-ui,sans-serif;color:#fff;background:#7c3aed;border-radius:4px;padding:2px 4px;margin-left:3px;vertical-align:2px;cursor:pointer}
+.aibar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:#eceef3;margin:10px 0 6px}
+.aibar i{display:block;height:100%}
+.ailegend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--ink2)}
+.ailegend span{display:inline-flex;gap:5px;align-items:center}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.note{background:#faf5ff;border:1px solid #e9d5ff;color:#5b21b6;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-top:10px}
+.warnbox{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-top:10px}
+.logo small a.credit{color:var(--acc);font-weight:650;text-decoration:none}
+.foot{text-align:center;color:var(--ink3);font-size:13px;padding:0 20px 28px}
+.foot a{font-weight:650;text-decoration:none}
+.foot a:hover,.logo small a.credit:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="logo"><i>✓</i>OpenPlag <small>open-source plagiarism checker · by <a class="credit" href="https://www.linkedin.com/in/theabcguy/" target="_blank" rel="noopener">ABC</a></small></div>
+  <div class="sp"></div>
+  <button class="btn ghost hide" id="newBtn">＋ New check</button>
+  <button class="btn hide" id="pdfBtn">⬇ PDF report</button>
+</div></header>
+
+<main>
+<!-- ================= FORM ================= -->
+<section id="form">
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <h3>Your document</h3>
+        <p class="h">Paste text or upload a file (.docx, .pdf, .txt, .md, .odt, .rtf, .html).</p>
+        <textarea id="text" placeholder="Paste the essay, assignment or article you want to check…"></textarea>
+        <div class="row" style="margin-top:10px;justify-content:space-between">
+          <div class="drop" id="docDrop" style="flex:1;min-width:220px">📄 Drop a file here or <b>browse</b><input type="file" id="docFile" hidden accept=".txt,.md,.docx,.pdf,.odt,.rtf,.html,.htm"></div>
+          <span class="muted" id="wc">0 words</span>
+        </div>
+        <div class="files" id="docChip"></div>
+      </div>
+      <div class="card">
+        <h3>Compare with your own files <span class="muted">(optional)</span></h3>
+        <p class="h">Add past papers, class submissions or source material. Every file is checked against your document – works fully offline too.</p>
+        <div class="drop" id="refDrop">📚 Drop reference files or <b>browse</b><input type="file" id="refFiles" hidden multiple accept=".txt,.md,.docx,.pdf,.odt,.rtf,.html,.htm"></div>
+        <div class="files" id="refChips"></div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <h3>Search depth</h3>
+        <p class="h">Deeper searches send more queries and download more sources. They catch more but take longer.</p>
+        <div class="modes" id="modes"></div>
+      </div>
+      <div class="card">
+        <h3>Where to search</h3>
+        <p class="h">Tap to switch sources on or off. Sources marked 🔑 need a free API key (Advanced).</p>
+        <div id="provGroups"></div>
+        <div class="grp">Web search engines</div>
+        <div class="chips" id="engines"></div>
+        <div class="row" style="margin-top:10px">
+          <label class="muted" style="flex:none">Region</label>
+          <select id="region" style="max-width:200px">
+            <option value="us-en">Worldwide (English)</option><option value="in-en">India (English)</option>
+            <option value="uk-en">United Kingdom</option><option value="au-en">Australia</option>
+            <option value="ca-en">Canada</option><option value="de-de">Germany</option>
+            <option value="fr-fr">France</option><option value="es-es">Spain</option>
+          </select>
+        </div>
+        <details>
+          <summary>Advanced options</summary>
+          <label class="opt"><input type="checkbox" id="exQuotes" checked> Exclude text inside quotation marks</label>
+          <label class="opt"><input type="checkbox" id="exRefs" checked> Exclude the references / bibliography section</label>
+          <label class="opt"><input type="checkbox" id="exact"> Search exact phrases (in quotes) – fewer but stricter web results</label>
+          <label class="opt"><input type="checkbox" id="semantic"> <span>Semantic paraphrase check <span class="muted" id="semNote"></span></span></label>
+          <div class="row" style="margin:8px 0">
+            <label class="muted" style="flex:none">Smallest match (words)</label>
+            <input type="number" id="minWords" value="8" min="5" max="30" style="width:80px">
+          </div>
+          <label class="muted">Ignore these domains (one per line, e.g. your own blog)</label>
+          <textarea id="exDomains" style="min-height:60px;margin:4px 0 10px" placeholder="example.com"></textarea>
+          <div class="grp">API keys <span class="muted" style="text-transform:none;font-weight:400">– saved only in this browser</span></div>
+          <div class="keys">
+            <div><label>Google Programmable Search key</label><input type="password" data-key="google_key"></div>
+            <div><label>Google Search engine ID (cx)</label><input type="text" data-key="google_cx"></div>
+            <div><label>Brave Search API key</label><input type="password" data-key="brave"></div>
+            <div><label>CORE API key (full-text papers)</label><input type="password" data-key="core"></div>
+            <div><label>Semantic Scholar key (optional)</label><input type="password" data-key="s2"></div>
+            <div><label>Contact email (faster OpenAlex/Crossref)</label><input type="text" data-key="email"></div>
+          </div>
+        </details>
+      </div>
+      <div class="card">
+        <h3>AI-writing check <span class="muted">(optional, uses Groq)</span></h3>
+        <p class="h">Estimates which passages look AI-generated and explains why. It is an estimate, not proof. Get a free key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.</p>
+        <label class="opt"><input type="checkbox" id="aiCheck"> Estimate AI-written text</label>
+        <div class="keys">
+          <div><label>Groq API key</label><input type="password" data-key="groq" placeholder="gsk_…"></div>
+          <div><label>Model</label><div class="row" style="flex-wrap:nowrap"><select id="groqModel"></select><button class="btn ghost" id="groqRefresh" title="Load models from Groq" style="padding:7px 10px">↻</button></div></div>
+        </div>
+      </div>
+      <button class="btn big" id="goBtn">🔎 Check for plagiarism</button>
+      <div class="err" id="err"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROGRESS ================= -->
+<section id="progress" class="hide">
+  <div class="card">
+    <h3 id="pName">Checking…</h3>
+    <div class="muted" id="pStage">Starting</div>
+    <div class="pbar"><i id="pFill"></i></div>
+    <div class="log" id="pLog"></div>
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" id="cancelBtn">Cancel</button></div>
+  </div>
+</section>
+
+<!-- ================= RESULTS ================= -->
+<section id="results" class="hide">
+  <div class="side stack">
+    <div class="card">
+      <div class="score">
+        <div class="ring" id="ring"><div><span><b id="simPct">0%</b><br>similarity</span></div></div>
+        <table class="kv" id="kv"></table>
+      </div>
+      <div class="muted" id="metaLine" style="margin-top:10px"></div>
+    </div>
+    <div class="card hide" id="aiCard"></div>
+    <div class="card">
+      <h3>Matching sources</h3>
+      <p class="h">Tap a source to jump to its matches. Exclude a source to recalculate the score.</p>
+      <div id="srcList"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="tabs"><button class="tab on" data-v="sim">Similarity</button><button class="tab" data-v="ai" id="aiTab">AI estimate</button></div>
+    <div class="tools">
+      <strong id="docTitle" style="flex:1;min-width:160px"></strong>
+      <button class="btn ghost" id="prevM">◀ Prev</button>
+      <button class="btn ghost" id="nextM">Next match ▶</button>
+    </div>
+    <div class="ailegend hide" id="aiLegend" style="margin-bottom:12px">
+      <span><i class="dot" style="background:rgba(124,58,237,.45)"></i>Likely AI (70%+)</span>
+      <span><i class="dot" style="background:rgba(124,58,237,.22)"></i>Mixed (40–70%)</span>
+      <span><i class="dot" style="background:rgba(124,58,237,.06);border:1px solid #ddd"></i>Likely human</span>
+      <span>Tap a passage to see why</span>
+    </div>
+    <div class="legend" id="simLegend" style="margin-bottom:12px">
+      <span><i class="sw"></i>Exact match</span>
+      <span><i class="sw" style="border-bottom:2px solid #c62828"></i>Near-exact (light edits)</span>
+      <span><i class="sw" style="background:none;border-bottom:2px dotted #c62828"></i>Possible paraphrase</span>
+      <span style="font-style:italic;color:var(--ink3)">grey = excluded</span>
+    </div>
+    <div class="doc" id="doc"></div>
+  </div>
+</section>
+</main>
+<footer class="foot">Created by <a href="https://www.linkedin.com/in/theabcguy/" target="_blank" rel="noopener">ABC</a> · OpenPlag open-source plagiarism checker</footer>
+
+<div id="drawer"><div class="in">
+  <div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div id="dHead" style="flex:1;min-width:0"></div><button class="btn ghost" id="dPrev" title="Previous" style="padding:8px 11px">◀</button><button class="btn ghost" id="dNext" title="Next" style="padding:8px 11px">▶</button><button class="btn ghost" id="dClose" style="padding:8px 11px">✕</button></div>
+  <div class="cmp"><div><h4 id="dDocH">Your text</h4><div id="dDoc"></div></div><div><h4 id="dSrcH">Source</h4><div id="dSrc"></div></div></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const store = {get(k,d){try{const v=localStorage.getItem("openplag:"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+               set(k,v){try{localStorage.setItem("openplag:"+k,JSON.stringify(v))}catch(e){}}};
+let INFO = null, docFile = null, refFiles = [], JOB = null, RES = null, EXCLUDED = new Set(), mIdx = -1, VIEW = "sim", aIdx = -1;
+const MODE_TXT = {quick:"Quick",standard:"Standard",deep:"Deep",exhaustive:"Exhaustive"};
+const GROUPS = [["Internet",["web","google","brave"]],["Encyclopedia",["wikipedia"]],
+                ["Scholarly & academic",["openalex","crossref","semantic","arxiv","europepmc","doaj","core"]]];
+const TYPE = {web:"Internet",academic:"Publication",encyclopedia:"Encyclopedia",file:"Your file"};
+const KIND = {exact:"Exact match",near:"Near-exact match",para:"Possible paraphrase"};
+let state = {mode: store.get("mode","standard"), providers: new Set(store.get("providers",
+  ["web","wikipedia","openalex","crossref","semantic","arxiv","europepmc","doaj","core","google","brave"])),
+  engines: new Set(store.get("engines", ["google","bing","brave","duckduckgo","mojeek","yahoo"]))};
+
+function toast(msg, ms=3200){const t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
+function showErr(msg){const e=$("#err");e.textContent=msg;e.style.display=msg?"block":"none"}
+function view(name){for(const v of ["form","progress","results"]) $("#"+v).classList.toggle("hide",v!==name);
+  $("#newBtn").classList.toggle("hide",name==="form"); $("#pdfBtn").classList.toggle("hide",name!=="results"); window.scrollTo(0,0)}
+function keys(){const k={};document.querySelectorAll("[data-key]").forEach(i=>{if(i.value.trim())k[i.dataset.key]=i.value.trim()});return k}
+function colorFor(n){const p=INFO.palette;return n?p[(n-1)%p.length]:["#eee","#555"]}
+
+async function init(){
+  INFO = await (await fetch("/api/info")).json();
+  // modes
+  $("#modes").innerHTML = Object.entries(INFO.modes).map(([k,m])=>`<button class="mode" data-m="${k}"><b>${MODE_TXT[k]}</b><span>${m.queries} queries · ${m.fetch} pages</span></button>`).join("");
+  document.querySelectorAll(".mode").forEach(b=>b.onclick=()=>{state.mode=b.dataset.m;store.set("mode",state.mode);paint()});
+  // providers
+  const byName = Object.fromEntries(INFO.providers.map(p=>[p.name,p]));
+  $("#provGroups").innerHTML = GROUPS.map(([g,names])=>`<div class="grp">${g}</div><div class="chips">${names.filter(n=>byName[n]).map(n=>`<span class="chip" data-p="${n}">${esc(byName[n].label)}${byName[n].needs_key?" <small>🔑</small>":""}</span>`).join("")}</div>`).join("");
+  document.querySelectorAll("[data-p]").forEach(c=>c.onclick=()=>{const n=c.dataset.p;
+    if(c.classList.contains("dis")){toast("Add its API key under Advanced options first.");return}
+    state.providers.has(n)?state.providers.delete(n):state.providers.add(n);store.set("providers",[...state.providers]);paint()});
+  $("#engines").innerHTML = INFO.engines.map(e=>`<span class="chip" data-e="${e}">${e[0].toUpperCase()+e.slice(1)}</span>`).join("");
+  document.querySelectorAll("[data-e]").forEach(c=>c.onclick=()=>{const n=c.dataset.e;
+    state.engines.has(n)?state.engines.delete(n):state.engines.add(n);store.set("engines",[...state.engines]);paint()});
+  // keys
+  const saved = store.get("keys",{});
+  document.querySelectorAll("[data-key]").forEach(i=>{i.value=saved[i.dataset.key]||"";
+    if(INFO.env_keys.includes(i.dataset.key)) i.placeholder="set on server";
+    i.oninput=()=>{store.set("keys",keys());paint()}});
+  $("#region").value = store.get("region","us-en"); $("#region").onchange=e=>store.set("region",e.target.value);
+  if(!INFO.semantic){$("#semantic").disabled=true;$("#semNote").textContent="– install sentence-transformers to enable (see README)"}
+  else $("#semNote").textContent="– catches reworded sentences; slower, first run downloads a ~470 MB model";
+  $("#aiCheck").checked = store.get("aiCheck", false);
+  $("#aiCheck").onchange = e => store.set("aiCheck", e.target.checked);
+  loadModels(store.get("groqModels", null));
+  $("#groqRefresh").onclick = e => { e.preventDefault(); loadModels(null, true) };
+  $("#groqModel").onchange = e => store.set("groqModel", e.target.value);
+  paint(); wire();
+}
+
+async function loadModels(cached, force){
+  const sel = $("#groqModel");
+  const fill = list => { const cur = store.get("groqModel", list[0]);
+    sel.innerHTML = list.map(m=>`<option ${m===cur?"selected":""}>${esc(m)}</option>`).join(""); };
+  if(cached && !force){ fill(cached); return }
+  fill(["openai/gpt-oss-120b","openai/gpt-oss-20b","llama-3.3-70b-versatile","llama-3.1-8b-instant"]);
+  const key = keys().groq;
+  if(!key && !INFO.env_keys.includes("groq")){ if(force) toast("Add your Groq API key first."); return }
+  try{
+    const r = await (await fetch("/api/groq/models",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key})})).json();
+    fill(r.models); if(r.live){ store.set("groqModels", r.models); if(force) toast(`Loaded ${r.models.length} Groq models`) }
+    else if(force) toast("Could not load models: "+(r.error||"check the key"));
+  }catch(e){ if(force) toast("Could not reach Groq") }
+}
+
+function paint(){
+  document.querySelectorAll(".mode").forEach(b=>b.classList.toggle("on",b.dataset.m===state.mode));
+  const k = {...Object.fromEntries(INFO.env_keys.map(x=>[x,1])), ...keys()};
+  const need = {google:k.google_key&&k.google_cx, brave:k.brave, core:k.core};
+  document.querySelectorAll("[data-p]").forEach(c=>{const n=c.dataset.p, dis=(n in need)&&!need[n];
+    c.classList.toggle("dis",dis); c.classList.toggle("on",!dis&&state.providers.has(n))});
+  document.querySelectorAll("[data-e]").forEach(c=>{c.classList.toggle("on",state.engines.has(c.dataset.e));
+    c.classList.toggle("dis",!state.providers.has("web"))});
+}
+
+function setupDrop(zone, input, onFiles){
+  zone.onclick=e=>{if(e.target!==input) input.click()};
+  input.onchange=()=>{onFiles([...input.files]);input.value=""};
+  ["dragenter","dragover"].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add("on")}));
+  ["dragleave","drop"].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove("on")}));
+  zone.addEventListener("drop",e=>onFiles([...e.dataTransfer.files]));
+}
+function chips(){
+  $("#docChip").innerHTML = docFile?`<span class="file">📄 ${esc(docFile.name)} <button data-rm="doc">✕</button></span>`:"";
+  $("#refChips").innerHTML = refFiles.map((f,i)=>`<span class="file">${esc(f.name)} <button data-rm="${i}">✕</button></span>`).join("");
+  document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=e=>{e.stopPropagation();
+    if(b.dataset.rm==="doc"){docFile=null;$("#text").disabled=false}else refFiles.splice(+b.dataset.rm,1);chips();wc()});
+}
+function wc(){$("#wc").textContent = docFile?"file selected":`${($("#text").value.match(/\w+/g)||[]).length.toLocaleString()} words`}
+
+function wire(){
+  setupDrop($("#docDrop"),$("#docFile"),fs=>{if(fs[0]){docFile=fs[0];$("#text").disabled=true;chips();wc()}});
+  setupDrop($("#refDrop"),$("#refFiles"),fs=>{refFiles.push(...fs);chips()});
+  $("#text").addEventListener("input",wc);
+  $("#text").value = store.get("draft",""); wc();
+  $("#text").addEventListener("input",()=>store.set("draft",$("#text").value));
+  $("#goBtn").onclick=start;
+  $("#cancelBtn").onclick=async()=>{if(JOB) await fetch(`/api/jobs/${JOB}/cancel`,{method:"POST"})};
+  $("#newBtn").onclick=()=>{view("form");JOB=null;VIEW="sim"};
+  $("#pdfBtn").onclick=()=>{if(JOB) location.href=`/api/jobs/${JOB}/report.pdf`};
+  $("#dClose").onclick=closeDrawer;
+  $("#dPrev").onclick=()=>step(-1); $("#dNext").onclick=()=>step(1);
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>setView(t.dataset.v));
+  $("#nextM").onclick=()=>step(1); $("#prevM").onclick=()=>step(-1);
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
+}
+
+async function start(){
+  showErr("");
+  const text=$("#text").value.trim();
+  if(!docFile && (text.match(/\w+/g)||[]).length<15){showErr("Paste at least 15 words or upload a file.");return}
+  const k=keys(), env=INFO.env_keys, has=x=>k[x]||env.includes(x);
+  const providers=[...state.providers].filter(p=>!(p==="google"&&!(has("google_key")&&has("google_cx")))&&!(p==="brave"&&!has("brave"))&&!(p==="core"&&!has("core")));
+  const aiOn = $("#aiCheck").checked;
+  if(aiOn && !has("groq")){showErr("Add your Groq API key in the AI-writing check box, or untick it.");return}
+  if(!providers.length && !refFiles.length && !aiOn){showErr("Pick at least one source to search, add reference files, or turn on the AI-writing check.");return}
+  const opts={mode:state.mode,providers,engines:[...state.engines],region:$("#region").value,
+    exclude_quotes:$("#exQuotes").checked,exclude_refs:$("#exRefs").checked,exact_phrase:$("#exact").checked,
+    semantic:$("#semantic").checked,min_words:+$("#minWords").value||8,
+    exclude_domains:$("#exDomains").value.split(/\s+/).filter(Boolean),keys:k,
+    ai_check:aiOn,groq_model:$("#groqModel").value};
+  const fd=new FormData(); fd.append("text",docFile?"":text); fd.append("options",JSON.stringify(opts));
+  if(docFile) fd.append("file",docFile); refFiles.forEach(f=>fd.append("refs",f));
+  $("#goBtn").disabled=true;
+  try{
+    const r=await fetch("/api/check",{method:"POST",body:fd}); const j=await r.json();
+    if(!r.ok) throw new Error(j.error||"Could not start the check");
+    JOB=j.id; $("#pName").textContent=`Checking “${j.name}” · ${j.words.toLocaleString()} words`;
+    $("#pLog").textContent=""; $("#pFill").style.width="2%"; view("progress"); poll(0);
+  }catch(e){showErr(e.message)}finally{$("#goBtn").disabled=false}
+}
+
+async function poll(since){
+  if(!JOB) return;
+  let j; try{j=await (await fetch(`/api/jobs/${JOB}?since=${since}`)).json()}catch(e){setTimeout(()=>poll(since),1500);return}
+  if(j.error && !j.status){toast(j.error);view("form");return}
+  $("#pStage").textContent=j.stage; $("#pFill").style.width=Math.max(2,j.progress)+"%";
+  if(j.log.length){const L=$("#pLog");L.textContent+=j.log.join("\n")+"\n";L.scrollTop=L.scrollHeight}
+  if(j.status==="done"){RES=j.result;EXCLUDED=new Set();render(j.name);view("results");return}
+  if(j.status==="error"){showErr(j.error);view("form");return}
+  if(j.status==="cancelled"){toast("Check cancelled");view("form");return}
+  setTimeout(()=>poll(j.log_len),900);
+}
+
+function render(name){
+  if(name) $("#docTitle").textContent=name;
+  const r=RES, p=r.similarity, c=p<15?"var(--ok)":p<40?"var(--warn)":"var(--bad)";
+  $("#ring").style.setProperty("--p",Math.min(100,p)); $("#ring").style.setProperty("--c",c);
+  $("#simPct").textContent=p+"%"; $("#simPct").style.color=c;
+  const bk=r.by_kind||{}, bt=r.by_type||{}, m=r.meta||{};
+  const rows=[["Words checked",r.counted_words.toLocaleString()],["Matched words",r.matched_words.toLocaleString()],
+    ["Exact",(bk.exact||0)+"%"],["Near-exact",(bk.near||0)+"%"],["Paraphrase",(bk.para||0)+"%"],
+    ["Internet",((bt.web||0)+(bt.encyclopedia||0)).toFixed(1)+"%"],["Publications",(bt.academic||0)+"%"],["Your files",(bt.file||0)+"%"]];
+  $("#kv").innerHTML=rows.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join("");
+  $("#metaLine").textContent=`${m.queries||0} queries · ${m.candidates||0} candidate sources · ${m.downloaded||0} downloaded · ${m.seconds||0}s`
+    +(r.quoted_words?` · ${r.quoted_words} quoted words excluded`:"")+(r.reference_words?` · references excluded`:"");
+  const list=r.sources;
+  $("#srcList").innerHTML = list.length? list.map(s=>{const [hl,st]=colorFor(s.n);return `
+    <div class="src ${s.excluded?"off":""}" data-sid="${s.id}">
+      <div class="num" style="background:${st}">${s.n}</div>
+      <div style="min-width:0"><div class="t">${esc(s.title)}</div>
+        <div class="u"><span class="badge">${TYPE[s.type]||s.type}</span>${s.full_text?"":'<span class="badge">snippet</span>'}${s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(s.url.replace(/^https?:\/\//,""))}</a>`:esc(s.provider)}</div></div>
+      <div><div class="pct" style="color:${st}">${s.excluded?"–":s.pct+"%"}</div><span class="x" data-ex="${s.id}">${s.excluded?"include":"exclude"}</span></div>
+    </div>`}).join("") : `<p class="muted">No matching sources found in the sources searched. 🎉</p>`;
+  document.querySelectorAll(".src").forEach(el=>el.onclick=()=>jumpSource(el.dataset.sid));
+  document.querySelectorAll("[data-ex]").forEach(el=>el.onclick=e=>{e.stopPropagation();toggleExclude(el.dataset.ex)});
+  renderSimDoc();
+  mIdx=-1;
+  renderAiCard();
+  setView(VIEW==="ai" && RES.ai && RES.ai.available ? "ai" : "sim");
+}
+function renderSimDoc(){
+  const r=RES;
+  $("#doc").innerHTML = r.segments.map(s=>{
+    if(s.c==="m"){const [hl,st]=colorFor(s.n);
+      const style=s.k==="para"?`border-color:${st}`:`background:${hl};text-decoration-color:${st}`;
+      return `<mark class="${s.k}" data-m="${s.m}" data-s="${s.s}" style="${style}">${esc(s.t)}</mark><sup style="color:${st}" data-m="${s.m}">${s.n}</sup>`}
+    if(s.c==="q"||s.c==="r") return `<span class="q">${esc(s.t)}</span>`;
+    return esc(s.t)}).join("");
+  document.querySelectorAll("#doc [data-m]").forEach(el=>el.onclick=()=>openMatch(+el.dataset.m));
+}
+
+function aiColor(p){ return p>=70?"#7c3aed":p>=40?"#a78bfa":"#c4b5fd" }
+function renderAiCard(){
+  const a = RES.ai, card = $("#aiCard");
+  $("#aiTab").classList.toggle("hide", !(a && a.available));
+  if(!a){ card.classList.add("hide"); return }
+  card.classList.remove("hide");
+  if(!a.available){ card.innerHTML = `<h3>AI-writing estimate</h3><p class="muted" style="margin:6px 0 0">${esc(a.error||"Not available")}</p>`; return }
+  const lvl = a.overall>=70?"Likely AI-generated":a.overall>=40?"Mixed / uncertain":"Likely human-written";
+  card.innerHTML = `<h3>AI-writing estimate</h3>
+    <div class="row" style="gap:14px;margin-top:8px"><b style="font-size:30px;color:${aiColor(a.overall)};line-height:1">${a.overall}%</b>
+      <div><b>${lvl}</b><div class="muted">word-weighted AI-likelihood</div></div></div>
+    <div class="aibar"><i style="width:${a.likely_ai}%;background:#7c3aed"></i><i style="width:${a.mixed}%;background:#c4b5fd"></i><i style="width:${a.likely_human}%;background:#e5e7eb"></i></div>
+    <div class="ailegend"><span><i class="dot" style="background:#7c3aed"></i>Likely AI ${a.likely_ai}%</span><span><i class="dot" style="background:#c4b5fd"></i>Mixed ${a.mixed}%</span><span><i class="dot" style="background:#e5e7eb"></i>Human ${a.likely_human}%</span></div>
+    ${a.comment?`<p style="font-size:13px;margin:10px 0 0">${esc(a.comment)}</p>`:""}
+    ${a.short_text?`<div class="warnbox">Under 300 words, so this estimate is especially unreliable.</div>`:""}
+    <div class="note">An estimate by <b>${esc(a.model)}</b>, not proof. AI judges can flag formal academic or non-native English writing by mistake. Never accuse anyone based on this alone.</div>
+    <button class="btn ghost" style="margin-top:10px;width:100%;justify-content:center" onclick="setView('ai')">View passages ▶</button>`;
+}
+function setView(v){
+  VIEW = v; closeDrawer();
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
+  $("#aiLegend").classList.toggle("hide",v!=="ai"); $("#simLegend").classList.toggle("hide",v!=="sim");
+  $("#nextM").textContent = v==="ai" ? "Next passage ▶" : "Next match ▶";
+  if(v==="sim"){ renderSimDoc(); return }
+  const a = RES.ai, t = RES.segments.map(x=>x.t).join("");
+  let html = "", pos = 0;
+  a.passages.forEach((p,i)=>{
+    html += esc(t.slice(pos,p.start));
+    if(p.ai==null){ html += esc(t.slice(p.start,p.end)); pos=p.end; return }
+    const alpha = p.ai>=70?.45:p.ai>=40?.22:.06;
+    html += `<span class="aip" data-a="${i}" style="background:rgba(124,58,237,${alpha})">${esc(t.slice(p.start,p.end))}</span><span class="aitag" data-a="${i}" style="background:${aiColor(p.ai)}">AI ${Math.round(p.ai)}%</span>`;
+    pos = p.end;
+  });
+  html += esc(t.slice(pos));
+  $("#doc").innerHTML = html; aIdx = -1;
+  document.querySelectorAll("#doc [data-a]").forEach(el=>el.onclick=()=>openPassage(+el.dataset.a));
+}
+function openPassage(i){
+  const p = RES.ai.passages[i]; if(!p) return; aIdx = i;
+  document.querySelectorAll("#doc .aip.focus").forEach(e=>e.classList.remove("focus"));
+  const el = document.querySelector(`#doc .aip[data-a="${i}"]`); if(el){el.classList.add("focus");el.scrollIntoView({block:"center",behavior:"smooth"})}
+  const t = RES.segments.map(x=>x.t).join("").slice(p.start,p.end);
+  $("#dHead").innerHTML = `<span class="num" style="background:${aiColor(p.ai)};display:inline-grid;vertical-align:middle;margin-right:8px;width:auto;padding:0 6px">${Math.round(p.ai)}%</span><b>Passage ${p.id}</b> · AI-likelihood · ${p.words} words`;
+  $("#dDocH").textContent = "Passage"; $("#dSrcH").textContent = "Why";
+  $("#dDoc").textContent = t;
+  const st = [];
+  if(p.burstiness!=null) st.push(`Sentence-length variation: <b>${p.burstiness}</b> ${p.burstiness<0.35?"(very even, AI-like)":p.burstiness>0.6?"(varied, human-like)":""}`);
+  st.push(`Average sentence: <b>${p.avg_sentence_len}</b> words · vocabulary variety: <b>${p.ttr}</b>`);
+  if(p.ai_phrases.length) st.push(`AI-typical phrases: ${p.ai_phrases.map(x=>`<b>${esc(x)}</b>`).join(", ")}`);
+  $("#dSrc").innerHTML = (p.signals.length?`<ul style="margin:0 0 8px;padding-left:18px">${p.signals.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="muted">No reasons given.</p>`)
+    + `<div class="muted" style="font-size:12.5px;line-height:1.6">${st.join("<br>")}</div>`;
+  $("#drawer").classList.add("open");
+}
+
+function openMatch(i){
+  const m=RES.matches[i]; if(!m) return; mIdx=i;
+  const s=RES.sources.find(x=>x.id===m.source)||{}; const [hl,st]=colorFor(m.n);
+  document.querySelectorAll("#doc mark.focus").forEach(e=>e.classList.remove("focus"));
+  const marks=document.querySelectorAll(`#doc mark[data-m="${i}"]`); marks.forEach(e=>e.classList.add("focus"));
+  if(marks[0]) marks[0].scrollIntoView({block:"center",behavior:"smooth"});
+  $("#dHead").innerHTML=`<span class="num" style="background:${st};display:inline-grid;vertical-align:middle;margin-right:8px">${m.n}</span>
+    <b>${KIND[m.kind]}</b> · ${m.words} words${m.kind!=="exact"?` · ${m.score}% similar`:""}<br>
+    <span class="muted">${esc(s.title||"")}</span> ${s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener">open source ↗</a>`:""}`;
+  $("#dDocH").textContent="Your text"; $("#dSrcH").textContent="Source";
+  $("#dDoc").innerHTML=`<b class="hl" style="background:${hl}">${esc(m.doc)}</b>`;
+  $("#dSrc").innerHTML=esc(m.src).replace(/\[\[/g,`<b class="hl" style="background:${hl}">`).replace(/\]\]/g,"</b>")
+    +(s.full_text?"":`<p class="muted" style="margin:8px 0 0">Compared using the search snippet / abstract – open the source to verify.</p>`);
+  $("#drawer").classList.add("open");
+}
+function closeDrawer(){$("#drawer").classList.remove("open");document.querySelectorAll("#doc .focus").forEach(e=>e.classList.remove("focus"))}
+function step(d){
+  if(VIEW==="ai"){ const n=RES.ai.passages.length; if(!n) return; aIdx = aIdx<0 ? (d>0?0:n-1) : (aIdx+d+n)%n; openPassage(aIdx); return }
+  const ids=[...new Set([...document.querySelectorAll("#doc mark[data-m]")].map(e=>+e.dataset.m))];
+  if(!ids.length){toast("No matches to show");return}
+  let pos=ids.indexOf(mIdx); pos = pos<0 ? (d>0?0:ids.length-1) : (pos+d+ids.length)%ids.length; openMatch(ids[pos]);
+}
+function jumpSource(sid){
+  if(VIEW!=="sim") setView("sim");
+  const first=document.querySelector(`#doc mark[data-s="${sid}"]`);
+  if(first) openMatch(+first.dataset.m); else toast("This source is excluded or has no attributed matches.");
+  if(window.innerWidth<980 && first) first.scrollIntoView({block:"center"});
+}
+async function toggleExclude(sid){
+  EXCLUDED.has(sid)?EXCLUDED.delete(sid):EXCLUDED.add(sid);
+  const r=await fetch(`/api/jobs/${JOB}/exclude`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({exclude:[...EXCLUDED]})});
+  if(!r.ok){toast("Could not recalculate – the check may have expired.");return}
+  RES=await r.json(); closeDrawer(); render(); toast("Score recalculated");
+}
+init().catch(e=>showErr("Could not reach the OpenPlag server: "+e.message));
+</script>
+</body>
+</html>

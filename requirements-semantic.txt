@@ -1,0 +1,2 @@
+# Optional: paraphrase detection with sentence embeddings (~2 GB with PyTorch)
+sentence-transformers>=3.0
